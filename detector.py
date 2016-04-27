@@ -1,13 +1,15 @@
 import camera
 import config
 import cv2
+import os
 
 class DetectorTypes(object):
-    Face = 0
-    Eyes = 1
-    Mouth = 2
-    Body = 3
-    Licence = 4
+    Unspecified = 0
+    Face = 1
+    Eyes = 2
+    Mouth = 4
+    Body = 8
+    Licence = 16
 
     def __init__(self):
         pass
@@ -15,59 +17,115 @@ class DetectorTypes(object):
 # end class
 
 
-
 class Detector(object):
-
     # create haarcascades!
+    faceCascade = cv2.CascadeClassifier(os.path.join( config.general.haars.path, config.general.haars.face))
+    eyesCascade = cv2.CascadeClassifier(os.path.join( config.general.haars.path, config.general.haars.eyes))
+    smileCascade = cv2.CascadeClassifier(os.path.join( config.general.haars.path, config.general.haars.mouth))
+    bodyCascade = cv2.CascadeClassifier(os.path.join( config.general.haars.path, config.general.haars.body))
+    licenceCascade = cv2.CascadeClassifier(os.path.join( config.general.haars.path, config.general.haars.licence))
 
     def __init__(self, camera):
         self.camera = camera
         pass
 
     def detect(self, type=DetectorTypes.Face):
+        detected = {}
+        requireFace = False
+        requireEyes = False
+        requireMouth = False
+        requireBody = False
+        requireLicence = False
+        requiredCount = 0
+        foundCount = 0
+
         frame = camera.read()
         grayImage = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-        if
+        if ( type & DetectorTypes.Face ) == DetectorTypes.Face:
+            requiredCount += 1
+            requireFace = True
+
+        if (type & DetectorTypes.Eyes) == DetectorTypes.Eyes:
+            requiredCount += 1
+            requireEyes = True
+
+        if (type & DetectorTypes.Mouth) == DetectorTypes.Mouth:
+            requiredCount += 1
+            requireMouth = True
+
+        if (type & DetectorTypes.Mouth) == DetectorTypes.Mouth:
+            requiredCount += 1
+            requireBody = True
+
+        if (type & DetectorTypes.Mouth) == DetectorTypes.Mouth:
+            requiredCount += 1
+            requireLicence = True
 
 
-        # look for faces
-        faces = FaceRecognitionManager.faceCascade.detectMultiScale(grayImage, 1.3, 5)
+        if requireFace is True:
+            detected.faces = []
+            faces = Detector.faceCascade.detectMultiScale(grayImage, config.detect.scaleFactor, config.detect.minNeighbors)
 
-        for (x, y, w, h) in faces:
-            hasEyes = False
-            hasMouth = False
-            image = frame[y:y + h, x:x + w]
+            if len(faces) > 0:
+                foundCount += 1
 
-            # draw rectangle around entire face
-            # cv2.rectangle( frame, (x, y), (x+w, y+h), (255, 255, 0), 2)
+            for (x, y, w, h) in faces:
+                detected.faces.append = (x, y, w, h)
+        # endif requireFace
 
-            grayFace = grayImage[y:y + h, x:x + w]
+        if requireEyes is True:
+            detected.eyes = []
+            eyes = Detector.eyesCascade.detectMultiScale(grayImage)
 
-            # look for eyes
-            eyes = FaceRecognitionManager.eyesCascade.detectMultiScale(grayFace)
+            if len(eyes) > 0:
+                foundCount += 1
 
             for (ex, ey, ew, eh) in eyes:
-                hasEyes = True
-                # draw rectangle around eyes
-                # cv2.rectangle(faceColor, (ex, ey), (ex+ew, ey+eh), (0, 255, 255), 2)
+                detected.eyes.append = (ex, ey, ew, eh)
+        # endif requireEyes
 
-            # look for mouth
-            mouths = FaceRecognitionManager.smileCascade.detectMultiScale(grayFace)
+        if requireMouth is True:
+            detected.mouths = []
+            mouths = Detector.smileCascade.detectMultiScale(grayImage)
+
+            if len(mouths) > 0:
+                foundCount += 1
 
             for (ex, ey, ew, eh) in mouths:
-                hasMouth = True
-                # draw rectangle around mouth
-                # cv2.rectangle(faceColor, (ex, ey), (ex+ew, ey+eh), (255, 0, 255), 2)
+                detected.mouths.append = (ex, ey, ew, eh)
+        # endif requireMouth
 
-            if ((hasEyes == True) and (hasMouth == True)):
-                self.detected.append(image)
+        if requireBody is True:
+            detected.bodies = []
+            bodies = Detector.bodyCascade.detectMultiScale(grayImage)
 
-        return self.detected
+            if len(bodies) > 0:
+                foundCount += 1
 
-    # this should be running in it's own thread
-    def __motion(self):
-        pass
+            for (x, y, w, h) in bodies:
+                detected.bodies.append = (x, y, w, h)
+        # endif requireBody
+
+        if requireLicence is True:
+            detected.licences = []
+            licences = Detector.licenceCascade.detectMultiScale(grayImage)
+
+            if len(licences) > 0:
+                foundCount += 1
+
+            for (x, y, w, h) in licences:
+                detected.licences.append = (x, y, w, h)
+        # endif requireBody
+
+        response = False
+        if requiredCount == foundCount:
+            detected.image = frame
+            response = True
+        else:
+            detected = {}
+
+        return response, detected
 
 
 # http://www.pyimagesearch.com/2015/05/25/basic-motion-detection-and-tracking-with-python-and-opencv/
@@ -112,6 +170,8 @@ class MotionDetector(object):
     def stop(self):
         self.running = False
 
+
+
 def create(camera):
     c = config.cameras[camera]
     type = c.type
@@ -121,7 +181,7 @@ def create(camera):
     if c.user:
         cam.user = c.user
 
-    if c.pass:
+    if len(c.password) > 0:
         cam.password = c.password
 
     return Detector(cam)

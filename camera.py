@@ -18,13 +18,13 @@ class Camera(object):
 
 class IpCamera(Camera):
 
-    def __init__(self, url, user=None, password=None):
+    def __init__(self, config):
         pmgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
-        pmgr.add_password(None, url, user, password)
+        pmgr.add_password(None, config.address, config.user, config.password)
         handler = urllib2.HTTPBasicAuthHandler(pmgr)
         opener = urllib2.build_opener(handler)
         urllib2.install_opener(opener)
-        self.url = url
+        self.url = config.address
 
     def read(self):
         stream = urllib2.urlopen(self.url)
@@ -35,8 +35,8 @@ class IpCamera(Camera):
 
 class LocalCamera(Camera):
 
-    def __init__(self, camera=0):
-        self.capture = cv2.VideoCapture(camera)
+    def __init__(self, config):
+        self.capture = cv2.VideoCapture(config.address)
 
     def read(self):
         image = None
@@ -48,8 +48,8 @@ class LocalCamera(Camera):
 
 class StreamCamera(Camera):
 
-    def __init__(self, stream):
-        self.stream = stream
+    def __init__(self, config):
+        self.stream = config.address
 
     def read(self):
         data = self.stream.read()
