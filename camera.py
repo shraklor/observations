@@ -7,7 +7,7 @@ class Camera(object):
     def __init__(self):
         pass
 
-    @abstractMethod
+    # @abstractMethod
     def read(self):
         pass
 
