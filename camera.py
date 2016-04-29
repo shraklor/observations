@@ -1,13 +1,14 @@
 import cv2
 import numpy as np
 import urllib2
+import abc
 
 
 class Camera(object):
     def __init__(self):
         pass
 
-    # @abstractMethod
+    @abc.abstractMethod
     def read(self):
         pass
 
@@ -15,16 +16,32 @@ class Camera(object):
         image = self.read()
         cv2.imwrite(image, filename)
 
+    def create(configuration):
+        camera = None
+
+        address = configuration['address']
+        user = configuration['user']
+        pwd = configuration['password']
+
+        if configuration['type'] == 'ip':
+            camera = IpCamera(address, user, pwd)
+        elif configuration['type'] == 'usb':
+            camera = UsbCamera(address)
+        elif configuration['type'] == 'stream':
+            camera = StreamCamera(address)
+
+        return camera
+
 
 class IpCamera(Camera):
 
-    def __init__(self, config):
+    def __init__(self, address, user, password):
         pmgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
-        pmgr.add_password(None, config.address, config.user, config.password)
+        pmgr.add_password(None, address, user, password)
         handler = urllib2.HTTPBasicAuthHandler(pmgr)
         opener = urllib2.build_opener(handler)
         urllib2.install_opener(opener)
-        self.url = config.address
+        self.url = address
 
     def read(self):
         stream = urllib2.urlopen(self.url)
@@ -33,10 +50,10 @@ class IpCamera(Camera):
         return cv2.imdecode(image, cv2.IMREAD_COLOR)
 
 
-class LocalCamera(Camera):
+class UsbCamera(Camera):
 
-    def __init__(self, config):
-        self.capture = cv2.VideoCapture(config.address)
+    def __init__(self, number):
+        self.capture = cv2.VideoCapture(number)
 
     def read(self):
         image = None
@@ -48,8 +65,8 @@ class LocalCamera(Camera):
 
 class StreamCamera(Camera):
 
-    def __init__(self, config):
-        self.stream = config.address
+    def __init__(self, stream):
+        self.stream = stream
 
     def read(self):
         data = self.stream.read()

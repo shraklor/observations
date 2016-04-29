@@ -1,0 +1,93 @@
+[general]
+    [[haars]]
+    path = '.\\haarcascades'
+    eyes = 'haarcascade_eye_tree_eyeglasses.xml'
+    face = 'haarcascade_frontalface_default.xml'
+    mouth = 'haarcascade_smile.xml'
+    body = 'haarcascade_upperbody.xml'
+    licence = 'haarcascade_licence_plate_rus_16stages.xml'
+
+    [[debug]]
+    FACE_BORDER_COLOR = (255, 0, 0)
+    EYE_BORDER_COLOR = (0, 255, 0)
+    MOUTH_BORDER_COLOR = (255, 255, 0)
+    BORDER_THICKNESS = 2
+
+
+# for use in the detector application
+[detect]
+scaleFactor = 1.3
+minNeighbors = 5
+minFaceSize = (30, 30)
+maxFaceSize = (70, 70)
+minConfidence = .75
+
+
+# for use in the motion detection application
+[detectors]
+    [[front door]]
+    camera = 'front door'
+    area = (0, 0, 480, 760)
+    # detectors[0].cron = (s,m,h,dow,dom,mon)
+    cron = (0, 0, 0, 0, 0, 0)
+    active = False
+    type = False
+
+    [[kitchen]]
+    camera = 'kitchen'
+    area = (0, 0, 480, 760)
+    # cron = (s,m,h,dow,dom,mon)
+    cron = (0, 0, 0, 0, 0, 0)
+    active = False
+
+
+# for use in the face recognizer application
+[recognizer]
+auto_train = True
+unknown = 'unknown'
+resize = (92, 115)
+
+
+# for use in the trainer
+[training]
+location = '.\\training'
+camera = ''
+delay = 5
+count = 30
+
+
+[motion]
+resize = (500, 500)
+blur = (21, 21)
+threshold = 25
+max = 255
+dilateIterations = 2
+
+    # this should be for each camera configured to motion
+    [[cameras]]
+        [[[office]]]
+        interval = .25
+        minArea = 500
+        camera = 'office'
+
+
+# list of cameras that can be used throughout all applications
+[cameras]
+    [[office]]
+    name = 'office'
+    type = 'usb'
+    address = '0'
+
+    [[front door]]
+    name = 'front door'
+    type = 'ip'
+    address = 'http://192.168.111.164'
+    user = ''
+    password = ''
+
+    [[kitchen]]
+    name = 'kitchen'
+    type = 'ip'
+    address = '192.168.111.163'
+    user = ''
+    password = ''
