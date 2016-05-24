@@ -35,7 +35,8 @@ class Camera(object):
 
 class IpCamera(Camera):
 
-    def __init__(self, address, user, password):
+    def __init__(self, name, address, user, password):
+        self.name = name
         pmgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
         pmgr.add_password(None, address, user, password)
         handler = urllib2.HTTPBasicAuthHandler(pmgr)
@@ -52,7 +53,8 @@ class IpCamera(Camera):
 
 class UsbCamera(Camera):
 
-    def __init__(self, number):
+    def __init__(self, name, number):
+        self.name = name
         self.capture = cv2.VideoCapture(number)
 
     def read(self):
@@ -65,7 +67,8 @@ class UsbCamera(Camera):
 
 class StreamCamera(Camera):
 
-    def __init__(self, stream):
+    def __init__(self, name, stream):
+        self.name = name
         self.stream = stream
 
     def read(self):

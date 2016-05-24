@@ -3,6 +3,7 @@ import time
 import uuid
 import os
 import config
+import event
 
 
 class RecognizerType(object):
@@ -19,17 +20,15 @@ class RecognizerType(object):
 
 class Recognizer(object):
 
-    def __init__(self, camera, trainer, type=RecognizerType.EigenFace):
+    def __init__(self, camera, recognizerType=RecognizerType.EigenFace):
+        self.FaceRecognized = Event()
         self.camera = camera
-        self.trainer = trainer
-
-        if self.trainer is None:
-            self.trainer = Trainer()
+        self.trainer = Trainer()
 
         if self.trainer.loaded is False:
             self.trainer.load()
 
-        self.type = type
+        self.type = recognizerType
 
     def detect(self):
         pass
@@ -100,7 +99,6 @@ class Trainer(object):
         return images, labels
 
 # end class
-
 
 
 if __name__ == '__main__':
