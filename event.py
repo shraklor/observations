@@ -1,24 +1,36 @@
-class Event:
+import threading
+
+
+class Event(object):
     def __init__(self):
+        self.lock = threading.Lock()
         self.handlers = set()
 
     def handle(self, handler):
-        self.handlers.add(handler)
+        with self.lock:
+            self.handlers.add(handler)
         return self
 
     def unhandle(self, handler):
-        try:
-            self.handlers.remove(handler)
-        except:
-            raise ValueError("Handler is not handling this event, so cannot unhandle it.")
+        with self.lock:
+            try:
+                self.handlers.remove(handler)
+            except:
+                raise ValueError("Handler is not handling this event, so cannot unhandle it.")
+
         return self
 
     def fire(self, *args, **kargs):
-        for handler in self.handlers:
-            handler(*args, **kargs)
+        with self.lock:
+            for handler in self.handlers:
+                t = threading.Thread(target=handler, args=args, kwargs=kargs)
+                t.daemon = True
+                t.start()
 
     def getHandlerCount(self):
-        return len(self.handlers)
+        with self.lock:
+            val = len(self.handlers)
+        return val
 
     __iadd__ = handle
     __isub__ = unhandle

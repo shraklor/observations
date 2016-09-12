@@ -6,31 +6,20 @@ import config
 import event
 
 
-class RecognizerType(object):
-    Unspecified = 0
-    EigenFace = 1
-    FischerFace = 2
-    LBPHFace = 3
-
-    def __init__(self):
-        pass
-
-# end class
-
-
 class Recognizer(object):
 
-    def __init__(self, camera, recognizerType=RecognizerType.EigenFace):
-        self.FaceRecognized = Event()
+    def __init__(self, configuration):
+
         self.camera = camera
-        self.trainer = Trainer()
+        self.loadTraining()
 
-        if self.trainer.loaded is False:
-            self.trainer.load()
+    def loadTraining(self):
+        pass
 
-        self.type = recognizerType
+    def addTraining(self, face, name):
+        pass
 
-    def detect(self):
+    def recognize(self, faces):
         pass
 
 # end class

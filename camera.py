@@ -1,34 +1,85 @@
 import cv2
 import numpy as np
 import urllib2
-import abc
+import security
+from event import Event
+from time import time, sleep
 
 
 class Camera(object):
     def __init__(self):
-        pass
+        self.FrameCaptured = Event()
+        self.name = ''
 
-    @abc.abstractMethod
     def read(self):
-        pass
+        raise NotImplementedError
 
     def save(self, filename):
         image = self.read()
         cv2.imwrite(image, filename)
 
-    def create(configuration):
+    def stream(self, fps):
+        frameperiod = 1.0 / fps
+        now = time()
+        nextframe = now + frameperiod
+        name = 'image_{0}'.format(self.name)
+        cv2.namedWindow(name)
+
+        while len(self.FrameCaptured) > 0:
+            frame = self.read()
+            cv2.imshow(name, frame)
+            cv2.waitKey(1)
+            self.FrameCaptured(frame)
+
+            while now < nextframe:
+                sleep(nextframe - now)
+                now = time()
+            nextframe += frameperiod
+
+        cv2.destroyWindow(name)
+
+    @staticmethod
+    def create(configuration, name):
         camera = None
 
-        address = configuration['address']
-        user = configuration['user']
-        pwd = configuration['password']
+        if 'cameras' not in configuration:
+            raise KeyError('Failed to find cameras listing in configuration settings')
 
-        if configuration['type'] == 'ip':
-            camera = IpCamera(address, user, pwd)
-        elif configuration['type'] == 'usb':
-            camera = UsbCamera(address)
-        elif configuration['type'] == 'stream':
-            camera = StreamCamera(address)
+        if name not in configuration['cameras']:
+            raise KeyError('Failed to find camera ["{0}"] in cameras listing'.format(name))
+
+        config = configuration['cameras'][name]
+
+        if 'type' in config:
+            typ = config['type']
+        else:
+            raise KeyError('Failed to find "type" of camera in configuration settings for...well the camera')
+
+        if 'address' in config:
+            address = config['address']
+        else:
+            raise KeyError('Failed to find "address" of camera in configuration settings for...well the camera')
+
+        if 'user' in config:
+            user = config['user']
+            if len(user) > 0:
+                user = security.Security.decrypt(user)
+        else:
+            user = ''
+
+        if 'password' in config:
+            pwd = config['password']
+            if len(pwd) > 0:
+                pwd = security.Security.decrypt(pwd)
+        else:
+            pwd = ''
+
+        if typ == 'ip':
+            camera = IpCamera(name, address, user, pwd)
+        elif typ == 'usb':
+            camera = UsbCamera(name, address)
+        elif typ == 'stream':
+            camera = StreamCamera(name, address)
 
         return camera
 
@@ -36,31 +87,42 @@ class Camera(object):
 class IpCamera(Camera):
 
     def __init__(self, name, address, user, password):
+        Camera.__init__(self)
         self.name = name
-        pmgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
-        pmgr.add_password(None, address, user, password)
-        handler = urllib2.HTTPBasicAuthHandler(pmgr)
-        opener = urllib2.build_opener(handler)
-        urllib2.install_opener(opener)
-        self.url = address
+        url = address.replace('{USER}', user).replace('{PASSWORD}', password)
+        self.url = url
+        manager = urllib2.HTTPPasswordMgrWithDefaultRealm()
+        manager.add_password(None, url, user, password)
+        handler = urllib2.HTTPBasicAuthHandler(manager)
+        self.opener = urllib2.build_opener(handler, urllib2.HTTPHandler(debuglevel=0))
 
     def read(self):
-        stream = urllib2.urlopen(self.url)
-        data = stream.read()
-        image = np.asarray(bytearray(data), dtype="uint8")
-        return cv2.imdecode(image, cv2.IMREAD_COLOR)
+        try:
+            stream = self.opener.open(self.url)
+            data = stream.read()
+            image = np.asarray(bytearray(data), dtype="uint8")
+            return cv2.imdecode(image, cv2.IMREAD_COLOR)
+        except urllib2.HTTPError as ex:
+            print ex.reason
+            print ex.read()
+            raise
 
 
 class UsbCamera(Camera):
 
     def __init__(self, name, number):
+        Camera.__init__(self)
         self.name = name
-        self.capture = cv2.VideoCapture(number)
+        number = int(float(number))
+        self.camera = number
 
     def read(self):
         image = None
-        if self.capture.isOpened():
-            _, image = self.capture.read()
+
+        capture = cv2.VideoCapture(self.camera)
+
+        if capture.isOpened():
+            _, image = capture.read()
 
         return image
 
@@ -68,6 +130,7 @@ class UsbCamera(Camera):
 class StreamCamera(Camera):
 
     def __init__(self, name, stream):
+        Camera.__init__(self)
         self.name = name
         self.stream = stream
 
