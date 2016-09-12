@@ -3,8 +3,10 @@ path = '.\\haarcascades'
 eyes = 'haarcascade_eye.xml'
 glasses = 'haarcascade_eye_tree_eyeglasses.xml'
 face = 'haarcascade_frontalface_default.xml'
+facealt = 'haarcascade_frontalface_alt.xml'
 mouth = 'haarcascade_smile.xml'
 body = 'haarcascade_upperbody.xml'
+fullbody = 'haarcascade_fullbody.xml'
 licence = 'haarcascade_licence_plate_rus_16stages.xml'
 
 [debug]

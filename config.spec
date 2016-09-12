@@ -3,8 +3,10 @@ path = string
 eyes = string
 glasses = string
 face = string
+facealt = string
 mouth = string
 body = string
+fullbody = string
 licence = string
 
 [debug]

@@ -45,12 +45,6 @@ class Detector(object):
 
         self._lastFrame = frame
 
-    def detectMotion(self):
-        pass
-
-    def detectFaces(self, image):
-        pass
-
     def detect(self, fps, area):
         self.continueDetecting = True
         self.isActive = True
@@ -79,9 +73,9 @@ class Detector(object):
                 print 'face!'
                 face = gray[y:fy + fh, x:fx + fw]
                 eyes = self.EYES_CASCADE.detectMultiScale(face)
-                glasses = self.GLASSES_CASCADE.detectMultiScale(face)
+                # glasses = self.GLASSES_CASCADE.detectMultiScale(face)
 
-                if len(eyes) is 0 and len(glasses) is 0:
+                if len(eyes) is 0:
                     print 'no eyes/glasses'
                     continue
 
@@ -93,8 +87,11 @@ class Detector(object):
 
                 print 'must be a face!'
                 self.FaceDetected(self.camera.name, fx, fy, fw, fh)
+                break
 
+        ########### next line not needed
         cv2.destroyWindow(window)
+        ###########
 
     def detectO(self, fps, area):
         detected = {}
