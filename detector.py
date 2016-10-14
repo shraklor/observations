@@ -1,6 +1,7 @@
 from event import Event
 import cv2
 import os
+from time import time, sleep
 
 
 class Detector(object):
@@ -30,39 +31,33 @@ class Detector(object):
     def create(configuration, camera):
         response = Detector(configuration)
         response.camera = camera
-        response.camera.FrameCaptured += response.OnFrameCaptured
         response.FaceDetected = Event()
         response.MotionDetected = Event()
 
         return response
-
-    def OnFrameCaptured(self, frame):
-        if self._lastFrame is None:
-            self._lastFrame = frame
-
-        print 'Frame Was Captured!'
-        self.FaceDetected(frame)
-
-        self._lastFrame = frame
 
     def detect(self, fps, area):
         self.continueDetecting = True
         self.isActive = True
 
         window = 'Image From {0}'.format(self.camera.name)
+
+        ########### next line not needed
         cv2.namedWindow(window)
 
         print 'FPS: {0}, Area: {1}'.format(fps, area)
+        frameperiod = 1.0 / fps
+        now = time()
+        nextframe = now + frameperiod
+
         while self.continueDetecting is True:
             frame = self.camera.read()
             x = area[0]
             y = area[1]
-            w = area[2]
-            h = area[3]
+            h = area[2]
+            w = area[3]
             ########### next 3 lines not needed
             cv2.rectangle(frame, (x, y), (x+w, y+h), (255, 255, 0), 2)
-            cv2.imshow(window, frame)
-            cv2.waitKey(1)
             ###########
 
             image = frame[y:y + h, x:x + w]
@@ -70,25 +65,37 @@ class Detector(object):
             faces = self.FACE_CASCADE.detectMultiScale(gray, self._scaleFactor, self._minNeighbors)
 
             for (fx, fy, fw, fh) in faces:
-                print 'face!'
                 face = gray[y:fy + fh, x:fx + fw]
-                eyes = self.EYES_CASCADE.detectMultiScale(face)
-                # glasses = self.GLASSES_CASCADE.detectMultiScale(face)
+                eyes = self.EYES_CASCADE.detectMultiScale(face, 1.2, 4)
 
-                if len(eyes) is 0:
-                    print 'no eyes/glasses'
+                if len(eyes) is not 2:
                     continue
 
-                print 'eyes/glasses'
-                mouths = self.SMILE_CASCADE.detectMultiScale(face)
-                if len(mouths) is 0:
-                    print 'no mouth'
+                smiles = self.SMILE_CASCADE.detectMultiScale(face, 3.0, 6)
+
+                if len(smiles) is not 1:
                     continue
 
-                print 'must be a face!'
-                self.FaceDetected(self.camera.name, fx, fy, fw, fh)
-                break
+                # cv2.rectangle(frame, (fx, fy), (fx + fw, fy + fh), (255, 0, 0), 2)
 
+                # for (ex, ey, ew, eh) in eyes:
+                #    cv2.rectangle(frame, (ex, ey), (ex + ew, ey + eh), (0, 255, 0), 2)
+
+                # for (mx, my, mw, mh) in smiles:
+                #    cv2.rectangle(frame, (mx, my), (mx + mw, my + mh), (255, 255, 120), 2)
+
+                self.FaceDetected(self.camera.name, cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+                break       # if we detect 1 face, it's good enough
+
+            cv2.imshow(window, frame)
+            cv2.waitKey(1)
+
+            while now < nextframe:
+                sleep(nextframe - now)
+                now = time()
+            nextframe += frameperiod
+
+        self.isActive = False
         ########### next line not needed
         cv2.destroyWindow(window)
         ###########

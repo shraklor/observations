@@ -89,23 +89,14 @@ class IpCamera(Camera):
     def __init__(self, name, address, user, password):
         Camera.__init__(self)
         self.name = name
-        url = address.replace('{USER}', user).replace('{PASSWORD}', password)
-        self.url = url
-        manager = urllib2.HTTPPasswordMgrWithDefaultRealm()
-        manager.add_password(None, url, user, password)
-        handler = urllib2.HTTPBasicAuthHandler(manager)
-        self.opener = urllib2.build_opener(handler, urllib2.HTTPHandler(debuglevel=0))
+        self.url = address.replace('{USER}', user).replace('{PASSWORD}', password)
 
     def read(self):
-        try:
-            stream = self.opener.open(self.url)
-            data = stream.read()
-            image = np.asarray(bytearray(data), dtype="uint8")
-            return cv2.imdecode(image, cv2.IMREAD_COLOR)
-        except urllib2.HTTPError as ex:
-            print ex.reason
-            print ex.read()
-            raise
+        capture = cv2.VideoCapture()
+        capture.open(self.url)
+        _, image = capture.read()
+
+        return image
 
 
 class UsbCamera(Camera):

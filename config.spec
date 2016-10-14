@@ -21,6 +21,14 @@ border.color.mouth.g = integer(min=0,max=255)
 border.color.mouth.b = integer(min=0,max=255)
 border.thickness = integer(min=0,max=5)
 
+[email.smtp]
+ssl = string
+server = string
+user = string
+username = string
+password = string
+
+
 [detect]
 scaleFactor = float
 minNeighbors = integer
@@ -29,6 +37,8 @@ min.face.w = integer
 max.face.h = integer
 max.face.w = integer
 minConfidence = float
+
+
 
 [detectors]
     [[__many__]]
@@ -46,6 +56,15 @@ minConfidence = float
     cron.month = integer(min=0,max=11)
     active = boolean
     type = boolean
+    [[[notification]]]
+        email = string
+        subject = string
+        body = string
+        include_attachment = boolean
+        phone = string
+        message = string
+        sound = string
+        network = string
 
 [recognizer]
 auto_train = boolean
