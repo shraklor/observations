@@ -1,6 +1,7 @@
 from configobj import ConfigObj, flatten_errors
 import validate
 from detector import Detector
+from recognizer import Recognizer
 from camera import Camera
 import cv2
 from time import time, sleep
@@ -27,6 +28,10 @@ if __name__ == '__main__':
     counter = 0
     sentEmail = False
 
+    def OnMotionDetection(camera, image):
+        print '{0} detected motion'.format(camera)
+
+
     def OnFaceDetection(camera, image):
         print '{0} detected a face'.format(camera)
 
@@ -52,8 +57,8 @@ if __name__ == '__main__':
             # message['body'] = 'Here is the body of the message!!'
             # message['attachment'] = filename
 
-            # mailer = gmailer.GMailer(config)
-            # mailer.send(message)
+            mailer = gmailer.GMailer(config)
+            mailer.send(config['detectors'][camera]['notification'], camera, filename)
             # email('{0} detected a face'.format(camera), 'brad.vanselous@gmail.com', filename)
 
             os.unlink(filename)
@@ -78,49 +83,32 @@ if __name__ == '__main__':
         fps = config['detectors'][key]['fps']
         area = (config['detectors'][key]['area.x'], config['detectors'][key]['area.y'], config['detectors'][key]['area.h'], config['detectors'][key]['area.w'])
         print 'Creating detector for {0}'.format(cameraName)
-        thread = threading.Thread(target=detector.detect, args=(fps, area))
+        thread = threading.Thread(target=detector.faces, args=(fps, area))
         thread.daemon = True
         thread.start()
 
-        # detector.spawn(camera, fps, area)
-        # fps
-        # area.x, y, h, w
-        # cron.second, minute, hour, dow, day, month
-        # type
+    for key in config['motion']:
+        cameraName = config['motion'][key]['camera']
 
+        if cameraName not in config['cameras']:
+            raise KeyError('Failed to find "{0}" in camera listing for detection'.format(cameraName))
 
+        camera = Camera.create(config, cameraName)
+        detector = Detector.create(config, camera)
+        threads['detector_'.format(cameraName)] = detector
 
-        # if camera is not None:
-        #     image = camera.read()
-        #     cv2.namedWindow('dst_rt')
-        #     cv2.imshow('dst_rt', image)
-        #     cv2.waitKey(2000)
-        #     cv2.destroyAllWindows()
+        detector.MotionDetected += OnMotionDetection
 
-    # detect.detectMotion()
+        fps = config['motion'][key]['fps']
+        area = (config['motion'][key]['area.x'], config['detectors'][key]['area.y'], config['detectors'][key]['area.h'], config['detectors'][key]['area.w'])
+        print 'Creating motion for {0}'.format(cameraName)
+        thread = threading.Thread(target=detector.motion, args=(fps, area, 500))
+        thread.daemon = True
+        thread.start()
 
 
 
     counter = 0
-
-    # create camera and display image
-    cam = None
-    # cam = Camera.create(config, 'logitech')
-    # cam = Camera.create(config, 'laptop')
-    # cam = Camera.create(config, 'garage door')
-    # cam = Camera.create(config, 'front door')
-    # cam = Camera.create(config, 'backyard')
-
-    # cam.FrameCaptured += OnFrameCaptured
-    # if cam is not None:
-    #    thread = threading.Thread(target=cam.stream, args=(5,))
-    #    thread.daemon = True
-    #    thread.start()
-    #    cv2.namedWindow('dst_rt')
-    #    image = cam.read()
-    #    cv2.imshow('dst_rt', image)
-    #    cv2.waitKey(2000)
-    #    cv2.destroyAllWindows()
     MAX_COUNTS = 20
     while counter <= MAX_COUNTS:
         sleep(1)
@@ -130,11 +118,14 @@ if __name__ == '__main__':
             for key in threads:
                 # print type(threads[key])
                 if isinstance(threads[key], Detector):
-                    if threads[key].isActive is True:
-                        print 'closing'
-                        threads[key].continueDetecting = False
+                    if threads[key].motionIsActive is True:
+                        print 'closing motion capture'
+                        threads[key].motionDetecting = False
+                    if threads[key].facesIsActive is True:
+                        print 'closing face detection'
+                        threads[key].facesDetecting = False
 
 
-    # cam.FrameCaptured -= OnFrameCaptured
+                            # cam.FrameCaptured -= OnFrameCaptured
     # cv2.destroyAllWindows()
 

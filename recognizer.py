@@ -2,24 +2,15 @@ import cv2
 import time
 import uuid
 import os
-import config
 import event
 
 
 class Recognizer(object):
 
     def __init__(self, configuration):
-
-        self.camera = camera
-        self.loadTraining()
-
-    def loadTraining(self):
         pass
 
-    def addTraining(self, face, name):
-        pass
-
-    def recognize(self, faces):
+    def recognize(self, face):
         pass
 
 # end class

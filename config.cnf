@@ -57,8 +57,8 @@ minConfidence = .75
     cron.month = 0
     active = False
     type = False
-    [[[notification]]]
-        email = "brad.vanselous@gmail.com"      # email address
+        [[[notification]]]
+        email = "brad.vanselous.spam@gmail.com"      # email address
         subject = "detection from {CAMERA}"    # subject line of email
         body = "There was a detection from {CAMERA} at {TIME}"    # subject line of email
         include_attachment = True
@@ -92,33 +92,34 @@ blur.w = 21
 threshold = 25
 max = 255
 dilateIterations = 2
-
     # this should be for each camera configured to motion
-    [[cameras]]
-        [[[office]]]
-        interval = .25
-        camera = 'office'
-        type = "face"       # or "any", or ...?
-        [[[[areas]]]]
-            [[[[[a]]]]]
-            x = 0
-            y = 0
-            w = 100
-            h = 200
+    [[[office]]]
+    interval = .25
+    camera = 'office'
+    [[[[areas]]]]
+        [[[[[a]]]]]
+        x = 0
+        y = 0
+        w = 100
+        h = 200
+        minArea = 500
 
-            [[[[[b]]]]]
-            x = 100
-            y = 200
-            w = 100
-            h = 200
+        [[[[[b]]]]]
+        x = 100
+        y = 200
+        w = 100
+        h = 200
+        minArea = 500
 
-        [[[[notification]]]]
-            email = ""      # email address
-            subject = ""    # subject line of email
-            phone = ""      # call this number
-            message = ""    # message for phone call?
-            sound = ""      # play a sound file
-            network = ""    # some network service we will stream image to
+        [[[notification]]]
+        email = "brad.vanselous.spam@gmail.com"      # email address
+        subject = "detection from {CAMERA}"    # subject line of email
+        body = "There was a detection from {CAMERA} at {TIME}"    # subject line of email
+        include_attachment = True
+        phone = ""      # call this number
+        message = ""    # message for phone call?
+        sound = ""      # play a sound file
+        network = ""    # some network service we will stream image to
 
 
 # list of cameras that can be used throughout all applications
